@@ -12,6 +12,7 @@ int dish_bltin_num_char();
 
 char** dish_splt_str(char* str);
 void dish_get_event(char* buf);
+void dish_exec(char** args);
 
 extern char* str;
 extern char* buf;

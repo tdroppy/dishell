@@ -54,6 +54,9 @@ void dish_event_loop() {
 		char** args;
 		args = dish_splt_str(buf); // builtin
 
+    //if (strcmp(args[0], "^[[A")) {
+      //printf("up arrow\n");
+    //}
 		dish_exec(args); // look for cmd
 
 		for (int i = 0; args[i] != NULL; i++) {
@@ -68,26 +71,6 @@ void dish_event_loop() {
 int dish_hi(char** args) {
   printf("Hello!\n");
   return 1;
-}
-
-void dish_exec(char** args) {
-	char* exec_arg = args[0];
-	if (args[0] == NULL) {
-		exit(1);
-	}
-
-  // looks for cmd with int return type
-	for (int i = 0; i < dish_bltin_num_int(); i++) { 
-		if (strcmp(args[0], dish_builtin_func_int[i]) == 0) {
-			builtin_func_int[i](args);
-		}
-	}
-  // if not in (int) arr looks for cmds with string return type
-  for (int j = 0; j < dish_bltin_num_char(); j++) {
-    if (strcmp(args[0], dish_builtin_func_char[j]) == 0) {
-      builtin_func_char[j](args);
-    }
-  }
 }
 
 int dish_exit(char** args) {

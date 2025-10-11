@@ -87,3 +87,24 @@ void dish_get_event(char* buf) { // reads line
 		perror("Cannot read input...");
 	}
 }
+
+void dish_exec(char** args) {
+	char* exec_arg = args[0];
+	if (exec_arg == NULL) {
+		printf("Why so quiet? (No command entered)\n");
+    return;
+	}
+
+  // looks for cmd with int return type
+	for (int i = 0; i < dish_bltin_num_int(); i++) { 
+		if (strcmp(exec_arg, dish_builtin_func_int[i]) == 0) {
+			builtin_func_int[i](args);
+		}
+	}
+  // if not in (int) arr looks for cmds with string return type
+  for (int j = 0; j < dish_bltin_num_char(); j++) {
+    if (strcmp(exec_arg, dish_builtin_func_char[j]) == 0) {
+      builtin_func_char[j](args);
+    }
+  }
+}
