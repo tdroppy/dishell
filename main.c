@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <readline/readline.h>
+#include <readline/history.h>
 
 #include "builtins.h"
 
@@ -47,9 +49,10 @@ char *dish_chng_cwd(char **args) {
 
 void dish_event_loop() {
 	char* buf = malloc(MAX_BUF_SIZE);
-	for (;;) { // infinite loop for REPL
-		printf("()> ");
-		dish_get_event(buf); // reads user input c/c (builtin)
+	while ((buf = readline("()> ")) != NULL) { // infinite loop for REPL
+    if (buf[0] != '\0' || buf[0] != '\n') {
+      add_history(buf);
+    }
 
 		char** args;
 		args = dish_splt_str(buf); // builtin

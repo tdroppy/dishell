@@ -67,27 +67,6 @@ char** dish_splt_str(char* str) {
 	return args;
 }
 
-void dish_get_event(char* buf) { // reads line
-	if (fgets(buf, MAX_BUF_SIZE, stdin) != NULL) {
-		size_t len = strlen(buf);
-
-		if (len > 0 && buf[len - 1] == '\n') {
-			buf[len - 1] = '\0'; // replace newline (if there is one)
-                           // with null terminator
-		}
-		else {
-			int c;
-			while ((c = getchar()) != '\n' && c != EOF);
-
-		}
-		printf("%s\n", buf);
-
-	}
-	else {
-		perror("Cannot read input...");
-	}
-}
-
 void dish_exec(char** args) {
 	char* exec_arg = args[0];
 	if (exec_arg == NULL) {
