@@ -10,17 +10,19 @@
 char* dish_builtin_func_int[] = {
 	"exit",
   "hi",
+  "ls",
 };
 
 char* dish_builtin_func_char[] = {
   "cwd",
-  "cd"
+  "cd",
 };
 
 // list of functions (needs to have same index as commands)
 int (*builtin_func_int[]) (char**) = {
 	&dish_exit,
   &dish_hi,
+  &dish_ls,
 };
 
 char* (*builtin_func_char[]) (char**) = {

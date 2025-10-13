@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <readline/readline.h>
 #include <readline/history.h>
+#include <dirent.h>
 
 #include "builtins.h"
 
@@ -45,6 +46,29 @@ char *dish_chng_cwd(char **args) {
     perror("Great heavens..");
   }
   dish_get_cwd(args);
+}
+
+int dish_ls(char **args) {
+  char tdir[MAX_BUF_SIZE];
+  if (args[1] == NULL) {
+    strcpy(tdir, "."); // default to cwd
+  }
+  else {
+    strcpy(tdir, args[1]); // let user target dir to ls
+  }
+  DIR *cdir = opendir(tdir);
+  struct dirent *retdir;
+  if (cdir == NULL) {
+    perror("Can't open directory: ");
+    return 1;
+  } 
+
+  while ((retdir = readdir(cdir))) {
+    puts(retdir->d_name);
+  }
+
+  closedir(cdir);
+  return 0;
 }
 
 void dish_event_loop() {

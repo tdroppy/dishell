@@ -19,5 +19,6 @@ extern char *dish_get_cwd(char** args);
 extern char *dish_chng_cwd(char** args);
 extern int dish_exit(char ** args);
 extern int dish_hi(char** args);
+extern int dish_ls(char** args);
 
 #endif
