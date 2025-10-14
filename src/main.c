@@ -86,6 +86,10 @@ int dish_ls(char **args) {
 
 void dish_event_loop() {
 	char* buf = malloc(MAX_BUF_SIZE);
+  if (buf == NULL) {
+    printf("Failed to allocate memory for cmd buffer.\n");
+    exit(1);
+  }
 	while ((buf = readline("()> ")) != NULL) { // infinite loop for REPL
     if (buf[0] != '\0' || buf[0] != '\n') {
       add_history(buf);
@@ -93,10 +97,6 @@ void dish_event_loop() {
 
 		char** args;
 		args = dish_splt_str(buf); // builtin
-
-    //if (strcmp(args[0], "^[[A")) {
-      //printf("up arrow\n");
-    //}
 		dish_exec(args); // look for cmd
 
 		for (int i = 0; args[i] != NULL; i++) {

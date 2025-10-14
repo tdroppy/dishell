@@ -54,16 +54,35 @@ char** dish_splt_str(char* str) {
 		else if (k > 0) {
 			indarg[k] = '\0';
 
-			args = realloc(args, (count + 1) * sizeof(char*));
-			args[count] = malloc(k + 1);
-			strcpy(args[count], indarg); // not valid in MSVC
+			char **tmpargs = realloc(args, (count + 1) * sizeof(char*));
+      if (tmpargs == NULL) {
+        printf("Resize (realloc) for args failed\n");
+        free(args);
+        exit(EXIT_FAILURE);
+      }
+      args = tmpargs;
 
+			args[count] = malloc(k + 1);
+      if (args[count] == NULL) {
+        for (int j = 0; j < count; j++) {
+          free(args[j]);
+        }
+        free(args);
+        exit(EXIT_FAILURE);
+      }
+			strcpy(args[count], indarg); // not valid in MSVC
 			count++;
 			k = 0;
 		}
 	}
 
-	args = realloc(args, (count + 1) * sizeof(char*));
+	char **tmpargs = realloc(args, (count + 1) * sizeof(char*));
+  if (tmpargs == NULL) {
+    printf("Resize (realloc) for args failed\n");
+    free(args);
+    exit(EXIT_FAILURE);
+  }
+  args = tmpargs;
 	args[count] = NULL;
 
 	return args;
@@ -76,16 +95,24 @@ void dish_exec(char** args) {
     return;
 	}
 
+  int checkcmd = 0;
+
   // looks for cmd with int return type
 	for (int i = 0; i < dish_bltin_num_int(); i++) { 
 		if (strcmp(exec_arg, dish_builtin_func_int[i]) == 0) {
 			builtin_func_int[i](args);
+      checkcmd = 1;
 		}
 	}
   // if not in (int) arr looks for cmds with string return type
   for (int j = 0; j < dish_bltin_num_char(); j++) {
     if (strcmp(exec_arg, dish_builtin_func_char[j]) == 0) {
       builtin_func_char[j](args);
+      checkcmd = 1;
     }
+  }
+
+  if (checkcmd == 0) {
+    printf("Command '%s' not found.\n", exec_arg);
   }
 }
