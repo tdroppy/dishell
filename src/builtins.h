@@ -20,5 +20,6 @@ extern char *dish_chng_cwd(char** args);
 extern int dish_exit(char ** args);
 extern int dish_hi(char** args);
 extern int dish_ls(char** args);
+extern int dish_run(char** args);
 
 #endif

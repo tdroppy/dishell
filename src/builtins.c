@@ -11,6 +11,7 @@ char* dish_builtin_func_int[] = {
 	"exit",
   "hi",
   "ls",
+  "run",
 };
 
 char* dish_builtin_func_char[] = {
@@ -23,6 +24,7 @@ int (*builtin_func_int[]) (char**) = {
 	&dish_exit,
   &dish_hi,
   &dish_ls,
+  &dish_run,
 };
 
 char* (*builtin_func_char[]) (char**) = {

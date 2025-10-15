@@ -5,7 +5,9 @@
 #include <readline/readline.h>
 #include <readline/history.h>
 #include <dirent.h>
+#include <signal.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 
 #include "builtins.h"
 
@@ -17,6 +19,7 @@ void dish_exec(char** args);
 char *dish_get_cwd(char** args);
 char *dish_chng_cwd(char** args);
 int dish_hi(char** args);
+int dish_open(char** args);
 
 char dish_cwd[1024];
 
@@ -106,6 +109,35 @@ void dish_event_loop() {
 	}
 	// exit stuff
 	free(buf);
+}
+
+int dish_run(char** args) { // TODO: MAKE BETTER!!!
+  pid_t dishprc;
+  if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) { // hmm maybe remove this and manually do it
+                                             // ill decide later lol 
+    perror("Signal failed");
+    exit(EXIT_FAILURE);
+  }
+
+  dishprc = fork();
+  if(dishprc<0) {
+    perror("Failed to fork");
+    exit(EXIT_FAILURE);
+  }
+
+  static char *newenv[] = {NULL};
+
+  if (dishprc== 0) { // if child process
+    execvp(args[1], (&args[1]));
+
+    // only runs if exec returns (meaning it failed)
+    perror("Execve failed");
+    exit(EXIT_FAILURE);
+  } else {
+    int child_status;
+    waitpid(dishprc, &child_status, 0);
+  }
+
 }
 
 int dish_hi(char** args) {
