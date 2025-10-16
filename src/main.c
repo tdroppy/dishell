@@ -8,12 +8,13 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <pwd.h>
 
 #include "builtins.h"
 
 #define MAX_BUF_SIZE 256
 
-void dish_event_loop();
+void dish_event_loop(char* usrprmpt);
 int dish_exit(char** args);
 void dish_exec(char** args);
 char *dish_get_cwd(char** args);
@@ -24,8 +25,19 @@ int dish_open(char** args);
 char dish_cwd[1024];
 
 int main() {
+  struct passwd *pw = getpwuid(getuid());
+  if (pw == NULL) {
+    printf("Failed to retrieve userid");
+  }
+
+  char* usrprmpt = malloc(strlen(pw->pw_name) + 6);
+  char* prmptend = " O~> \0";
+
+  usrprmpt = pw->pw_name;
+  strcat(usrprmpt, prmptend);
+
 	printf("Welcome!\n");
-	dish_event_loop();
+	dish_event_loop(usrprmpt);
 }
 
 char *dish_get_cwd(char **args) {
@@ -67,14 +79,14 @@ int dish_ls(char **args) {
     return 1;
   } 
 
-  while ((retdir = readdir(cdir))) { // TODO: sort based on file type
+  while ((retdir = readdir(cdir))) {
     if (strcmp(retdir->d_name, ".") != 0 && strcmp(retdir->d_name, "..") != 0) {;
       char ftype = retdir->d_type;
       if (ftype == DT_UNKNOWN) {
         printf("Filesystem doesn't support file types in dirent...\n");
       } else {
         if ((int)ftype == 4) {
-          printf("%s/    ", retdir->d_name);
+          printf("\033[31m%s/    \033[39m", retdir->d_name);
         } else {
           printf("%s    ", retdir->d_name);
         }
@@ -87,13 +99,14 @@ int dish_ls(char **args) {
   return 0;
 }
 
-void dish_event_loop() {
+void dish_event_loop(char* usrprmpt) {
 	char* buf = malloc(MAX_BUF_SIZE);
+
   if (buf == NULL) {
     printf("Failed to allocate memory for cmd buffer.\n");
     exit(1);
   }
-	while ((buf = readline("()> ")) != NULL) { // infinite loop for REPL
+	while ((buf = readline(usrprmpt)) != NULL) { // infinite loop for REPL
     if (buf[0] != '\0' || buf[0] != '\n') {
       add_history(buf);
     }
@@ -108,6 +121,7 @@ void dish_event_loop() {
 		free(args);
 	}
 	// exit stuff
+  free(usrprmpt);
 	free(buf);
 }
 
