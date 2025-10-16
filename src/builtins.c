@@ -8,7 +8,7 @@
 
 // list of commands (needs to have same index as func)
 char* dish_builtin_func_int[] = {
-	"exit",
+	"quit",
   "hi",
   "ls",
   "run",

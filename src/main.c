@@ -9,6 +9,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <pwd.h>
+#include <errno.h>
 
 #include "builtins.h"
 
@@ -21,10 +22,24 @@ char *dish_get_cwd(char** args);
 char *dish_chng_cwd(char** args);
 int dish_hi(char** args);
 int dish_open(char** args);
+void sgchld_handling(int signum);
 
 char dish_cwd[1024];
 
 int main() {
+  struct sigaction action;
+  sigemptyset(&action.sa_mask);
+  action.sa_handler = SIG_IGN;
+  sigaction(SIGINT, &action, NULL); // ignore ctrlc
+  sigaction(SIGTSTP, &action, NULL); // ignore ctrlz
+  sigaction(SIGQUIT, &action, NULL);
+  sigaction(SIGTTIN, &action, NULL);
+  sigaction(SIGTTOU, &action, NULL);
+
+  action.sa_handler = sgchld_handling;
+  action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+  sigaction(SIGCHLD, &action, NULL);
+
   struct passwd *pw = getpwuid(getuid());
   if (pw == NULL) {
     printf("Failed to retrieve userid");
@@ -139,12 +154,15 @@ void dish_event_loop(char* usrprmpt) {
 	free(buf);
 }
 
-int dish_run(char** args) { // TODO: MAKE BETTER!!!
-  pid_t dishprc;
-  if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) { // TODO: replace with sigaction 
-    perror("Signal failed");
-    exit(EXIT_FAILURE);
+void sgchld_handling(int signum) {
+  int temp_err = errno;
+  printf("Terminating %i\n", signum);
+  while(waitpid(-1, NULL, WNOHANG) > 0);
+  errno = temp_err;
   }
+
+int dish_run(char** args) {
+  pid_t dishprc;
 
   dishprc = fork();
   if(dishprc<0) {
@@ -155,6 +173,12 @@ int dish_run(char** args) { // TODO: MAKE BETTER!!!
   static char *newenv[] = {NULL};
 
   if (dishprc== 0) { // if child process
+    signal(SIGINT,  SIG_DFL);
+    signal(SIGTSTP, SIG_DFL);
+    signal(SIGQUIT, SIG_DFL);
+    signal(SIGTTIN, SIG_DFL);
+    signal(SIGTTOU, SIG_DFL);
+    signal(SIGCHLD, SIG_DFL);
     execvp(args[1], (&args[1]));
 
     // only runs if exec returns (meaning it failed)
