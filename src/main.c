@@ -91,12 +91,15 @@ int dish_ls(char **args) {
     if (strcmp(retdir->d_name, ".") != 0 && strcmp(retdir->d_name, "..") != 0) {;
       char ftype = retdir->d_type;
       if (ftype == DT_UNKNOWN) {
-        printf("Filesystem doesn't support file types in dirent...\n");
+        printf("Filesystem doesn't support dirent file types... \n");
       } else {
-        if ((int)ftype == 4) {
+        if ((int)ftype == 4 && retdir->d_name[0] != '.') {
           printf("\033[31m%s/    \033[39m", retdir->d_name);
         } else {
+          if (  char iftmp = strstr(retdir->d_name, ".tmp")  == NULL && 
+                retdir->d_name[0] != '.') {
           printf("%s    ", retdir->d_name);
+          }
         }
       }
     }
@@ -138,8 +141,7 @@ void dish_event_loop(char* usrprmpt) {
 
 int dish_run(char** args) { // TODO: MAKE BETTER!!!
   pid_t dishprc;
-  if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) { // hmm maybe remove this and manually do it
-                                             // ill decide later lol 
+  if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) { // TODO: replace with sigaction 
     perror("Signal failed");
     exit(EXIT_FAILURE);
   }
