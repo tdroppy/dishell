@@ -46,7 +46,7 @@ char *dish_get_cwd(char **args) {
 	
 
 	if (cwd == NULL) {
-		perror("We seem to be lost..: ");
+		perror("We seem to be lost.. ");
 		return NULL;
 	}
 
@@ -57,9 +57,17 @@ char *dish_get_cwd(char **args) {
 }
 
 char *dish_chng_cwd(char **args) {
-  const char *pth = args[1];
+  char *tmp_pth = args[1];
+  if (tmp_pth[0] == '/') {
+    tmp_pth[0] = ' ';
+    for (int i = 0; i < strlen(tmp_pth); i++) {
+      tmp_pth[i] = tmp_pth[i + 1];
+    }
+  } 
+  const char *pth = tmp_pth;
+
   if (int d = chdir(pth) != 0) {
-    perror("Great heavens..");
+    perror("Great heavens.. ");
   }
   dish_get_cwd(args);
 }
@@ -113,6 +121,9 @@ void dish_event_loop(char* usrprmpt) {
 
 		char** args;
 		args = dish_splt_str(buf); // builtin
+    
+    // TODO: add '&&' operation
+
 		dish_exec(args); // look for cmd
 
 		for (int i = 0; args[i] != NULL; i++) {
