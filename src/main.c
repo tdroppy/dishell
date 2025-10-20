@@ -23,11 +23,12 @@ char *dish_chng_cwd(char** args);
 int dish_hi(char** args);
 int dish_open(char** args);
 void sgchld_handling(int signum);
+int handle_term(int chs);
 
 char dish_cwd[1024];
+struct sigaction action;
 
 int main() {
-  struct sigaction action;
   sigemptyset(&action.sa_mask);
   action.sa_handler = SIG_IGN;
   sigaction(SIGINT, &action, NULL); // ignore ctrlc
@@ -156,10 +157,52 @@ void dish_event_loop(char* usrprmpt) {
 
 void sgchld_handling(int signum) {
   int temp_err = errno;
-  printf("Terminating %i\n", signum);
+  printf("sig num%i\n", signum);
   while(waitpid(-1, NULL, WNOHANG) > 0);
   errno = temp_err;
   }
+
+int handle_term(int chs) {
+  if (WIFSIGNALED(chs)) {
+    int term_signal = WTERMSIG(chs);
+    int coredmp;
+   
+    if(WCOREDUMP(chs)) {
+      coredmp = 1;
+    } else {coredmp = 0;}
+
+
+    switch (term_signal) { // TODO: change this
+      case SIGFPE:
+        printf("Floating Point Error (Core Dumped)\n");
+        break;
+      case SIGSEGV:
+        printf("Segmentation Fault (Core Dumped)\n");
+        break;
+      case SIGILL:
+        printf("Illegal Instruction (Core Dumped)\n");
+        break;
+      case SIGABRT:
+        printf("Abnormal termination (Core Dumped)\n");
+        break;
+      case SIGBUS:
+        printf("Bus error (Core Dumped)\n");
+        break;
+      case SIGXCPU:
+        printf("CPU time limit exceeded (Core Dumped)\n");
+        break;
+      case SIGXFSZ:
+        printf("File size limit exceeded (Core Dumped)\n");
+        break;
+      case SIGSYS:
+        printf("Bad system call (Core Dumped)\n");
+        break;
+      default:
+        printf("Uhhhh I don't know whats going on here...\n");
+        break;
+    }
+  }
+}
 
 int dish_run(char** args) {
   pid_t dishprc;
@@ -173,7 +216,7 @@ int dish_run(char** args) {
   static char *newenv[] = {NULL};
 
   if (dishprc== 0) { // if child process
-    signal(SIGINT,  SIG_DFL);
+    signal(SIGINT,  SIG_DFL); // TODO: Change to sigaction
     signal(SIGTSTP, SIG_DFL);
     signal(SIGQUIT, SIG_DFL);
     signal(SIGTTIN, SIG_DFL);
@@ -182,11 +225,29 @@ int dish_run(char** args) {
     execvp(args[1], (&args[1]));
 
     // only runs if exec returns (meaning it failed)
-    perror("Execve failed");
+    perror("Exec failed");
     exit(EXIT_FAILURE);
   } else {
+    char *path = malloc(20 + sizeof(dishprc)); // TODO: Make this work
+    
+    snprintf(path, sizeof(path), "/proc/%d/comm", dishprc);
+    FILE *fpidp = fopen(path, "r");
+
+    if (fpidp == NULL) {
+      perror("Failed to grab PID");
+      printf("\n%s\n", path);
+      printf("%d\n", dishprc);
+    } else {
+      char process_name[256];
+      if (fgets(process_name, sizeof(process_name), fpidp) != NULL) {
+        printf("%s\n", process_name);
+      }
+    }
     int child_status;
     waitpid(dishprc, &child_status, 0);
+    handle_term(child_status);
+
+    free(path);
   }
 
 }
