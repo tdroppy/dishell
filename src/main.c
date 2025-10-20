@@ -23,7 +23,7 @@ char *dish_chng_cwd(char** args);
 int dish_hi(char** args);
 int dish_open(char** args);
 void sgchld_handling(int signum);
-int handle_term(int chs);
+int handle_term(int chs, char* prc_name);
 
 char dish_cwd[1024];
 struct sigaction action;
@@ -157,49 +157,19 @@ void dish_event_loop(char* usrprmpt) {
 
 void sgchld_handling(int signum) {
   int temp_err = errno;
-  printf("sig num%i\n", signum);
   while(waitpid(-1, NULL, WNOHANG) > 0);
   errno = temp_err;
   }
 
-int handle_term(int chs) {
+int handle_term(int chs, char* prc_name) {
   if (WIFSIGNALED(chs)) {
     int term_signal = WTERMSIG(chs);
     int coredmp;
    
     if(WCOREDUMP(chs)) {
-      coredmp = 1;
-    } else {coredmp = 0;}
-
-
-    switch (term_signal) { // TODO: change this
-      case SIGFPE:
-        printf("Floating Point Error (Core Dumped)\n");
-        break;
-      case SIGSEGV:
-        printf("Segmentation Fault (Core Dumped)\n");
-        break;
-      case SIGILL:
-        printf("Illegal Instruction (Core Dumped)\n");
-        break;
-      case SIGABRT:
-        printf("Abnormal termination (Core Dumped)\n");
-        break;
-      case SIGBUS:
-        printf("Bus error (Core Dumped)\n");
-        break;
-      case SIGXCPU:
-        printf("CPU time limit exceeded (Core Dumped)\n");
-        break;
-      case SIGXFSZ:
-        printf("File size limit exceeded (Core Dumped)\n");
-        break;
-      case SIGSYS:
-        printf("Bad system call (Core Dumped)\n");
-        break;
-      default:
-        printf("Uhhhh I don't know whats going on here...\n");
-        break;
+      printf("Process '%s' terminated by signal %d: %s (Core Dumped)\n", prc_name, term_signal, strsignal(term_signal));
+    } else {
+      printf("Process '%s' terminated by signal %d: %s\n", prc_name, term_signal, strsignal(term_signal));
     }
   }
 }
@@ -216,38 +186,27 @@ int dish_run(char** args) {
   static char *newenv[] = {NULL};
 
   if (dishprc== 0) { // if child process
-    signal(SIGINT,  SIG_DFL); // TODO: Change to sigaction
-    signal(SIGTSTP, SIG_DFL);
-    signal(SIGQUIT, SIG_DFL);
-    signal(SIGTTIN, SIG_DFL);
-    signal(SIGTTOU, SIG_DFL);
-    signal(SIGCHLD, SIG_DFL);
+    struct sigaction sa;
+    memset(&sa, 0, sizeof(sa));
+    sa.sa_handler = SIG_DFL;
+    sa.sa_flags = 0;
+
+    sigaction(SIGINT , &sa, NULL ); 
+    sigaction(SIGTSTP, &sa, NULL );
+    sigaction(SIGQUIT, &sa, NULL );
+    sigaction(SIGTTIN, &sa, NULL );
+    sigaction(SIGTTOU, &sa, NULL );
+    sigaction(SIGCHLD, &sa, NULL );
     execvp(args[1], (&args[1]));
 
     // only runs if exec returns (meaning it failed)
     perror("Exec failed");
     exit(EXIT_FAILURE);
-  } else {
-    char *path = malloc(20 + sizeof(dishprc)); // TODO: Make this work
-    
-    snprintf(path, sizeof(path), "/proc/%d/comm", dishprc);
-    FILE *fpidp = fopen(path, "r");
-
-    if (fpidp == NULL) {
-      perror("Failed to grab PID");
-      printf("\n%s\n", path);
-      printf("%d\n", dishprc);
-    } else {
-      char process_name[256];
-      if (fgets(process_name, sizeof(process_name), fpidp) != NULL) {
-        printf("%s\n", process_name);
-      }
-    }
+  } else { // parent
     int child_status;
     waitpid(dishprc, &child_status, 0);
-    handle_term(child_status);
-
-    free(path);
+    char* name = args[1]; 
+    handle_term(child_status, name);
   }
 
 }
