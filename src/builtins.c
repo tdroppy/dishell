@@ -3,6 +3,7 @@
 #include <stdio.h> 
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #define MAX_BUF_SIZE 256
 
@@ -47,14 +48,32 @@ char** dish_splt_str(char* str) {
 	size_t strsize = strlen(str);
 	int count = 0;
 	int k = 0;
+  bool is_str = false;
 
 	for (int i = 0; i <= strsize; i++) {
 		char c = str[i];
+
+    if (c == '"' || c == '\'' || c == '\\') {
+      is_str = !is_str;
+      continue;
+    }
+
 		if (c != ' ' && c != '\0') {
-			indarg[k++] = c;
+      if (k < MAX_BUF_SIZE) {
+        indarg[k++] = c;
+      }
 		}
+
+    else if ((c == ' ' || c == '\0') && is_str) {
+      if (k < MAX_BUF_SIZE) {
+        indarg[k++] = c;
+      }
+    }
+
 		else if (k > 0) {
-			indarg[k] = '\0';
+			if (k < MAX_BUF_SIZE) {
+        indarg[k] = '\0';
+      }
 
 			char **tmpargs = realloc(args, (count + 1) * sizeof(char*));
       if (tmpargs == NULL) {
