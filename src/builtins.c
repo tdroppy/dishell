@@ -42,13 +42,19 @@ int dish_bltin_num_char() {
   return sizeof(dish_builtin_func_char) / sizeof(char*);
 }
 
-char** dish_splt_str(char* str) {
+Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
 	char** args = NULL;
 	char indarg[MAX_BUF_SIZE];
 	size_t strsize = strlen(str);
 	int count = 0;
 	int k = 0;
   bool is_str = false;
+
+  Arguments* cur_arg_list = malloc(sizeof(Arguments));
+  if (cur_arg_list == NULL) {
+    perror("cur_arg_list");
+    exit(EXIT_FAILURE);
+  }
 
 	for (int i = 0; i <= strsize; i++) {
 		char c = str[i];
@@ -103,10 +109,12 @@ char** dish_splt_str(char* str) {
     free(args);
     exit(EXIT_FAILURE);
   }
-  args = tmpargs;
+  
+  cur_arg_list->args_list = tmpargs;
+  cur_arg_list->args_size = count + 1;
 	args[count] = NULL;
 
-	return args;
+	return cur_arg_list;
 }
 
 void dish_exec(char** args) {

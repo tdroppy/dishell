@@ -138,15 +138,19 @@ void dish_event_loop(char* usrprmpt) {
       add_history(buf);
     }
 
-		char** args;
+		Arguments* args;
 		args = dish_splt_str(buf); // builtin
-    
+    if (args == NULL) {
+      printf("failed to read arguments\n");
+      exit(EXIT_FAILURE);
+    }
+
     // TODO: add '&&' operation
 
-		dish_exec(args); // look for cmd
+		dish_exec(args->args_list); // look for cmd
 
-		for (int i = 0; args[i] != NULL; i++) {
-			free(args[i]);
+		for (int i = 0; args->args_list[i] != NULL; i++) {
+			free(args->args_list[i]);
 		}
 		free(args);
 	}

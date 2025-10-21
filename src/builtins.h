@@ -1,5 +1,11 @@
+#include <stddef.h>
 #ifndef BUILTINS_H
 #define BUILTINS_H
+
+typedef struct Arguments {
+  char** args_list;
+  size_t args_size;
+} Arguments;
 
 extern char* dish_builtin_func_int[];
 extern char* dish_builtin_func_char[];
@@ -10,7 +16,7 @@ extern char* (*builtin_func_char[]) (char**);
 int dish_bltin_num_int();
 int dish_bltin_num_char();
 
-char** dish_splt_str(char* str);
+Arguments* dish_splt_str(char* str);
 void dish_exec(char** args);
 
 extern char* str;
