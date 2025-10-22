@@ -55,11 +55,6 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
     perror("cur_arg_list");
     exit(EXIT_FAILURE);
   }
-  cur_arg_list->exec_list = malloc(sizeof(int) * cur_arg_list->args_size);
-  //if (cur_arg_list->exec_list == NULL) { // TODO: figure out why borken
-  //  perror("exec_list");
-  //  exit(EXIT_FAILURE);
-  //}
 
 	for (int i = 0; i <= strsize; i++) {
 		char c = str[i];
@@ -124,12 +119,19 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
 }
 
 Arguments* make_argument(Arguments* args) {
+  args->exec_list = malloc(sizeof(int) * args->args_size);
+  if (args->exec_list == NULL) {
+    perror("exec_list");
+    exit(EXIT_FAILURE);
+  }
+
   char** tmpargs = args->args_list;
   int exec_list_index = 1;
   if (tmpargs != NULL) {
     args->exec_list_size = 1;
     args->exec_list[0] = args->args_list[0];
   }
+
 
   for (int i = 0; i < args->args_size; i++) { // get all executable arguments
     if (strcmp(tmpargs[i], "&&") == 0) {
@@ -139,15 +141,47 @@ Arguments* make_argument(Arguments* args) {
     }
   }
 
-  for (int j = 0; j < args->args_size; j++) { // get args per executable
-    char **indiv_arg = malloc(sizeof(args->args_list) * sizeof(char *));
-    int is_exec;
-    if (indiv_arg == NULL) {
-      perror("indiv_arg");
-      exit(EXIT_FAILURE);
+  char **indiv_arg = malloc(sizeof(args->args_list) * sizeof(char *));
+  if (indiv_arg == NULL) {
+    perror("indiv_arg (make_argument)");
+    exit(EXIT_FAILURE);
+  }
+  int is_exec = 0;
+  int tmp_arg_ind = 0;
+  int exec_arg_ind = 0;
+
+// j = current arg passed by user
+
+  for (int j = 0; j < args->args_size; j++) { // check every word
+    char* cur_arg = args->args_list[j];
+
+    for (int k = 0; k < args->exec_list_size; k++) { // compare against every exec arg
+      if (strcmp(cur_arg, args->exec_list[k]) == 0) {
+        is_exec = 1;
+        break;
+      }
+    }
+
+    if (is_exec == 1) {
+      for (int fj = j + 1; fj < args->args_size; fj++) {
+        char* tmp_cur = args->args_list[fj];
+        if(strcmp(tmp_cur, "&&") != 0) {
+          // add to indiv **args + inc indiv **args index
+          indiv_arg[tmp_arg_ind] = tmp_cur;
+          tmp_arg_ind++;
+        } else {
+          // add indiv **args to exec_arg_list reset indiv **args index
+          args->indiv_arg_list[args->indiv_arg_list_size];
+          args->indiv_arg_list_size += 1;
+          tmp_arg_ind = 0;
+        }
+
+      }
+      
     }
 
   }
+
   return args;
 }
 
