@@ -130,7 +130,7 @@ void dish_event_loop(char* usrprmpt) {
 
   if (buf == NULL) {
     printf("Failed to allocate memory for cmd buffer.\n");
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 	while ((buf = readline(usrprmpt)) != NULL) { // infinite loop for REPL
     if (buf[0] != '\0' || buf[0] != '\n') {
@@ -141,6 +141,7 @@ void dish_event_loop(char* usrprmpt) {
 		args = dish_splt_str(buf); // builtin
     if (args == NULL) {
       printf("failed to read arguments\n");
+      free(buf);
       exit(EXIT_FAILURE);
     }
 

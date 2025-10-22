@@ -1,3 +1,3 @@
 #!/bin/bash
 
-gcc ./src/main.c ./src/builtins.c -o dish -lreadline
+gcc -fsanitize=address -g ./src/main.c ./src/builtins.c -o dish -lreadline

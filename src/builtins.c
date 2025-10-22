@@ -119,7 +119,7 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
 }
 
 Arguments* make_argument(Arguments* args) {
-  args->exec_list = malloc(sizeof(int) * args->args_size);
+  args->exec_list = malloc(sizeof(char *) * args->args_size);
   if (args->exec_list == NULL) {
     perror("exec_list");
     exit(EXIT_FAILURE);
@@ -141,7 +141,7 @@ Arguments* make_argument(Arguments* args) {
     }
   }
 
-  char **indiv_arg = malloc(sizeof(args->args_list) * sizeof(char *));
+  char **indiv_arg = malloc(sizeof(char *) * args->args_size);
   if (indiv_arg == NULL) {
     perror("indiv_arg (make_argument)");
     exit(EXIT_FAILURE);
@@ -151,6 +151,12 @@ Arguments* make_argument(Arguments* args) {
   int exec_arg_ind = 0;
 
 // j = current arg passed by user
+  args->indiv_arg_list = malloc(sizeof(char**) * args->args_size);
+  if (args->indiv_arg_list == NULL) {
+    perror("indiv_arg_list");
+    exit(EXIT_FAILURE);
+  }
+  args->indiv_arg_list_size = 0;
 
   for (int j = 0; j < args->args_size; j++) { // check every word
     char* cur_arg = args->args_list[j];
@@ -165,19 +171,27 @@ Arguments* make_argument(Arguments* args) {
     if (is_exec == 1) {
       for (int fj = j + 1; fj < args->args_size; fj++) {
         char* tmp_cur = args->args_list[fj];
-        if(strcmp(tmp_cur, "&&") != 0) {
-          // add to indiv **args + inc indiv **args index
-          indiv_arg[tmp_arg_ind] = tmp_cur;
-          tmp_arg_ind++;
-        } else {
-          // add indiv **args to exec_arg_list reset indiv **args index
-          args->indiv_arg_list[args->indiv_arg_list_size];
-          args->indiv_arg_list_size += 1;
-          tmp_arg_ind = 0;
+        if(strcmp(tmp_cur, "&&") == 0) {
+          break;
+        } 
+        if (tmp_arg_ind >= args->args_size) {
+          perror("tmp_arg_ind");
+          exit(EXIT_FAILURE);
         }
 
+        indiv_arg[tmp_arg_ind++] = tmp_cur;
+
       }
-      
+
+      indiv_arg[tmp_arg_ind] = NULL;
+
+      if (args->indiv_arg_list_size >= args->args_size) {
+        perror("indiv_arg_list_size");
+        exit(EXIT_FAILURE);
+      }
+      args->indiv_arg_list[args->indiv_arg_list_size++] = indiv_arg;
+      is_exec = 0;
+      tmp_arg_ind = 0;
     }
 
   }
