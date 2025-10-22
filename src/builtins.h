@@ -5,6 +5,10 @@
 typedef struct Arguments {
   char** args_list;
   size_t args_size;
+  char** exec_list; // 1 index after '&&'
+  size_t exec_list_size;
+  char ***indiv_arg_list;
+  size_t indiv_arg_list_size;
 } Arguments;
 
 extern char* dish_builtin_func_int[];
@@ -17,7 +21,8 @@ int dish_bltin_num_int();
 int dish_bltin_num_char();
 
 Arguments* dish_splt_str(char* str);
-void dish_exec(char** args);
+void dish_exec(Arguments* args);
+Arguments* make_argument(Arguments* args);
 
 extern char* str;
 extern char** args;

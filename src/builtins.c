@@ -55,11 +55,16 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
     perror("cur_arg_list");
     exit(EXIT_FAILURE);
   }
+  cur_arg_list->exec_list = malloc(sizeof(int) * cur_arg_list->args_size);
+  //if (cur_arg_list->exec_list == NULL) { // TODO: figure out why borken
+  //  perror("exec_list");
+  //  exit(EXIT_FAILURE);
+  //}
 
 	for (int i = 0; i <= strsize; i++) {
 		char c = str[i];
 
-    if (c == '"' || c == '\'' || c == '\\') {
+    if (c == '"' || c == '\'') {
       is_str = !is_str;
       continue;
     }
@@ -79,7 +84,7 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
 		else if (k > 0) {
 			if (k < MAX_BUF_SIZE) {
         indarg[k] = '\0';
-      }
+    }
 
 			char **tmpargs = realloc(args, (count + 1) * sizeof(char*));
       if (tmpargs == NULL) {
@@ -110,15 +115,45 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
     exit(EXIT_FAILURE);
   }
   
-  cur_arg_list->args_list = tmpargs;
-  cur_arg_list->args_size = count + 1;
+  args = tmpargs;
+  cur_arg_list->args_list = args;
+  cur_arg_list->args_size = count;
 	args[count] = NULL;
 
-	return cur_arg_list;
+	return make_argument(cur_arg_list);
 }
 
-void dish_exec(char** args) {
-	char* exec_arg = args[0];
+Arguments* make_argument(Arguments* args) {
+  char** tmpargs = args->args_list;
+  int exec_list_index = 1;
+  if (tmpargs != NULL) {
+    args->exec_list_size = 1;
+    args->exec_list[0] = args->args_list[0];
+  }
+
+  for (int i = 0; i < args->args_size; i++) { // get all executable arguments
+    if (strcmp(tmpargs[i], "&&") == 0) {
+      args->exec_list[exec_list_index] = tmpargs[i + 1];
+      args->exec_list_size++;
+      exec_list_index++;
+    }
+  }
+
+  for (int j = 0; j < args->args_size; j++) { // get args per executable
+    char **indiv_arg = malloc(sizeof(args->args_list) * sizeof(char *));
+    int is_exec;
+    if (indiv_arg == NULL) {
+      perror("indiv_arg");
+      exit(EXIT_FAILURE);
+    }
+
+  }
+  return args;
+}
+
+void dish_exec(Arguments* args) {
+	char* exec_arg = args->args_list[0];
+  size_t exec_amount = args->exec_list_size;
 	if (exec_arg == NULL) {
 		printf("Why so quiet? (No command entered)\n");
     return;
@@ -129,19 +164,20 @@ void dish_exec(char** args) {
   // looks for cmd with int return type
 	for (int i = 0; i < dish_bltin_num_int(); i++) { 
 		if (strcmp(exec_arg, dish_builtin_func_int[i]) == 0) {
-			builtin_func_int[i](args);
+			builtin_func_int[i](args->args_list);
       checkcmd = 1;
 		}
 	}
   // if not in (int) arr looks for cmds with string return type
   for (int j = 0; j < dish_bltin_num_char(); j++) {
     if (strcmp(exec_arg, dish_builtin_func_char[j]) == 0) {
-      builtin_func_char[j](args);
+      builtin_func_char[j](args->args_list);
       checkcmd = 1;
     }
   }
 
   if (checkcmd == 0) {
     printf("Command '%s' not found.\n", exec_arg);
+    return;
   }
 }

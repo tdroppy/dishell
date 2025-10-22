@@ -17,7 +17,6 @@
 
 void dish_event_loop(char* usrprmpt);
 int dish_exit(char** args);
-void dish_exec(char** args);
 char *dish_get_cwd(char** args);
 char *dish_chng_cwd(char** args);
 int dish_hi(char** args);
@@ -147,11 +146,12 @@ void dish_event_loop(char* usrprmpt) {
 
     // TODO: add '&&' operation
 
-		dish_exec(args->args_list); // look for cmd
+		dish_exec(args); // look for cmd
 
 		for (int i = 0; args->args_list[i] != NULL; i++) {
 			free(args->args_list[i]);
 		}
+    free(args->exec_list); // TODO: free it like char**
 		free(args);
 	}
 	// exit stuff
