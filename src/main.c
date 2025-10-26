@@ -45,10 +45,15 @@ int main() {
     printf("Failed to retrieve userid");
   }
 
-  char* usrprmpt = malloc(strlen(pw->pw_name) + 6);
   char* prmptend = " O~> \0";
 
-  usrprmpt = pw->pw_name;
+  char* usrprmpt = malloc(strlen(pw->pw_name) + strlen(prmptend) + 1);
+  if (!usrprmpt) {
+    perror("usrprmpt");
+    exit(EXIT_FAILURE);
+  }
+
+  strcpy(usrprmpt, pw->pw_name);
   strcat(usrprmpt, prmptend);
 
 	printf("Welcome!\n");
@@ -139,6 +144,7 @@ void dish_event_loop(char* usrprmpt) {
 
 		Arguments* args;
 		args = dish_splt_str(buf); // builtin
+
     if (args == NULL) {
       printf("failed to read arguments\n");
       free(buf);
@@ -149,15 +155,18 @@ void dish_event_loop(char* usrprmpt) {
 
 		dish_exec(args); // look for cmd
 
+    for (int i = 0; i < args->indiv_arg_list_size; i++) {
+      free(args->indiv_arg_list[i]); // frees the indiv_arg arrays
+    }
+    free(args->indiv_arg_list);
 		for (int i = 0; args->args_list[i] != NULL; i++) {
-			free(args->args_list[i]);
+			free(args->args_list[i]); // args_list also contains elements exec_list points to
 		}
-    free(args->exec_list); // TODO: free it like char**
+    free(args->args_list);
+    free(args->exec_list); // ^ so no need to free elements as they already are.
 		free(args);
 	}
-	// exit stuff
   free(usrprmpt);
-	free(buf);
 }
 
 void sgchld_handling(int signum) {

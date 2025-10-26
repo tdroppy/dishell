@@ -12,7 +12,7 @@ char* dish_builtin_func_int[] = {
 	"quit",
   "hi",
   "ls",
-  "run",
+  "run", // TODO: broken, fix double free
 };
 
 char* dish_builtin_func_char[] = {
@@ -108,40 +108,47 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
     printf("Resize (realloc) for args failed\n");
     free(args);
     exit(EXIT_FAILURE);
+  } 
+  args=tmpargs;
+
+  cur_arg_list->args_list = malloc(sizeof(char *) * (count + 1));
+  for (int asd = 0; asd < count; asd++) {
+    cur_arg_list->args_list[asd] = (char*)strdup(args[asd]);
   }
-  
-  args = tmpargs;
-  cur_arg_list->args_list = args;
   cur_arg_list->args_size = count;
-	args[count] = NULL;
+	cur_arg_list->args_list[count] = NULL;
+
+  for (int i = 0; i < count; i++) {
+    free(args[i]);
+  }
+  free(args);
 
 	return make_argument(cur_arg_list);
 }
 
 Arguments* make_argument(Arguments* args) {
-  args->exec_list = malloc(sizeof(char *) * args->args_size);
+  args->exec_list = malloc(sizeof(char *) * args->args_size); // malloc EXEC LIST
   if (args->exec_list == NULL) {
     perror("exec_list");
     exit(EXIT_FAILURE);
   }
 
-  char** tmpargs = args->args_list;
-  int exec_list_index = 1;
-  if (tmpargs != NULL) {
+  char** tmpargs = args->args_list; // TMPARGS is just ARGS LIST
+  int exec_list_index = 1; // index list 1 for first element
+  if (tmpargs != NULL) { // sets the first element of exec list to first element of arg list (eg. run)
     args->exec_list_size = 1;
     args->exec_list[0] = args->args_list[0];
   }
 
-
   for (int i = 0; i < args->args_size; i++) { // get all executable arguments
-    if (strcmp(tmpargs[i], "&&") == 0) {
-      args->exec_list[exec_list_index] = tmpargs[i + 1];
+    if (strcmp(tmpargs[i], "&&") == 0) { // set every arg immediately following && as exec
+      args->exec_list[exec_list_index] = (char *)strdup(tmpargs[i + 1]);
       args->exec_list_size++;
       exec_list_index++;
     }
   }
 
-  char **indiv_arg = malloc(sizeof(char *) * args->args_size);
+  char **indiv_arg = malloc(sizeof(char *) * args->args_size); // will store every individual argument
   if (indiv_arg == NULL) {
     perror("indiv_arg (make_argument)");
     exit(EXIT_FAILURE);
@@ -151,7 +158,7 @@ Arguments* make_argument(Arguments* args) {
   int exec_arg_ind = 0;
 
 // j = current arg passed by user
-  args->indiv_arg_list = malloc(sizeof(char**) * args->args_size);
+  args->indiv_arg_list = malloc(sizeof(char**) * args->args_size); // will hold ptr to every argument
   if (args->indiv_arg_list == NULL) {
     perror("indiv_arg_list");
     exit(EXIT_FAILURE);
@@ -182,24 +189,40 @@ Arguments* make_argument(Arguments* args) {
         indiv_arg[tmp_arg_ind++] = tmp_cur;
 
       }
-
       indiv_arg[tmp_arg_ind] = NULL;
+      int indiv_arg_count = 0;
+      while (indiv_arg[indiv_arg_count] != NULL) {
+        indiv_arg_count++;
+      }
+      char **copy = malloc(sizeof(char *) * (indiv_arg_count + 1));
+      if (copy == NULL) {
+        perror("copy indiv_arg");
+        exit(EXIT_FAILURE);
+      }
+      for (int i = 0; i < indiv_arg_count; i++) {
+        copy[i] = strdup(indiv_arg[i]);
+      }
+
+      copy[tmp_arg_ind] = NULL;
 
       if (args->indiv_arg_list_size >= args->args_size) {
         perror("indiv_arg_list_size");
         exit(EXIT_FAILURE);
       }
-      args->indiv_arg_list[args->indiv_arg_list_size++] = indiv_arg;
+      args->indiv_arg_list[args->indiv_arg_list_size++] = copy;
       is_exec = 0;
       tmp_arg_ind = 0;
     }
 
   }
-
+  for (int i = 0; indiv_arg[i] != NULL; i++) {
+    free(indiv_arg[i]);
+  }
+  free(indiv_arg);
   return args;
 }
 
-void dish_exec(Arguments* args) {
+void dish_exec(Arguments* args) { //TODO: ITS YOU
 	char* exec_arg = args->args_list[0];
   size_t exec_amount = args->exec_list_size;
 	if (exec_arg == NULL) {
