@@ -77,7 +77,7 @@ char *dish_get_cwd(char **args) {
 }
 
 char *dish_chng_cwd(char **args) {
-  char *tmp_pth = args[1];
+  char *tmp_pth = args[0]; // TODO: temp fix for now
   if (tmp_pth[0] == '/') {
     tmp_pth[0] = ' ';
     for (int i = 0; i < strlen(tmp_pth); i++) {
@@ -94,11 +94,11 @@ char *dish_chng_cwd(char **args) {
 
 int dish_ls(char **args) {
   char tdir[MAX_BUF_SIZE];
-  if (args[1] == NULL) {
+  if (args[0] == NULL) {
     strcpy(tdir, "."); // default to cwd
   }
   else {
-    strcpy(tdir, args[1]); // let user target dir to ls
+    strcpy(tdir, args[0]); // let user target dir to ls
   }
   DIR *cdir = opendir(tdir);
   struct dirent *retdir;
@@ -145,26 +145,22 @@ void dish_event_loop(char* usrprmpt) {
 		Arguments* args;
 		args = dish_splt_str(buf); // builtin
 
-    if (args == NULL) {
-      printf("failed to read arguments\n");
-      free(buf);
-      exit(EXIT_FAILURE);
+    if (args != NULL) {
+		  dish_exec(args); // look for cmd
+      for (int i = 0; i < args->indiv_arg_list_size; i++) {
+        free(args->indiv_arg_list[i]); // frees the indiv_arg arrays
+      }
+      free(args->indiv_arg_list);
+		  for (int i = 0; args->args_list[i] != NULL; i++) {
+		  	free(args->args_list[i]); // args_list also contains elements exec_list points to
+		  }
+      free(args->args_list);
+      free(args->exec_list); // ^ so no need to free elements as they already are.
+		  free(args);
+    } else {
+      printf("Why so quiet? (Nothing entered)\n");
     }
 
-    // TODO: add '&&' operation
-
-		dish_exec(args); // look for cmd
-
-    for (int i = 0; i < args->indiv_arg_list_size; i++) {
-      free(args->indiv_arg_list[i]); // frees the indiv_arg arrays
-    }
-    free(args->indiv_arg_list);
-		for (int i = 0; args->args_list[i] != NULL; i++) {
-			free(args->args_list[i]); // args_list also contains elements exec_list points to
-		}
-    free(args->args_list);
-    free(args->exec_list); // ^ so no need to free elements as they already are.
-		free(args);
 	}
   free(usrprmpt);
 }
@@ -211,7 +207,7 @@ int dish_run(char** args) {
     sigaction(SIGTTIN, &sa, NULL );
     sigaction(SIGTTOU, &sa, NULL );
     sigaction(SIGCHLD, &sa, NULL );
-    execvp(args[1], (&args[1]));
+    execvp(args[0], (&args[1]));
 
     // only runs if exec returns (meaning it failed)
     perror("Exec failed");
@@ -232,5 +228,5 @@ int dish_hi(char** args) {
 
 int dish_exit(char** args) {
 	printf("Exiting.. byebye\n");
-	exit(0);
+	exit(EXIT_SUCCESS);
 }

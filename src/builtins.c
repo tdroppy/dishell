@@ -12,7 +12,7 @@ char* dish_builtin_func_int[] = {
 	"quit",
   "hi",
   "ls",
-  "run", // TODO: broken, fix double free
+  "run", 
 };
 
 char* dish_builtin_func_char[] = {
@@ -49,6 +49,10 @@ Arguments* dish_splt_str(char* str) { // TODO: its time to clean this up
 	int count = 0;
 	int k = 0;
   bool is_str = false;
+
+  if (*str == NULL) { // handles empty line in main.c/dish_event_loop
+    return NULL;
+  }
 
   Arguments* cur_arg_list = malloc(sizeof(Arguments));
   if (cur_arg_list == NULL) {
@@ -147,6 +151,7 @@ Arguments* make_argument(Arguments* args) {
       exec_list_index++;
     }
   }
+  
 
   char **indiv_arg = malloc(sizeof(char *) * args->args_size); // will store every individual argument
   if (indiv_arg == NULL) {
@@ -186,7 +191,7 @@ Arguments* make_argument(Arguments* args) {
           exit(EXIT_FAILURE);
         }
 
-        indiv_arg[tmp_arg_ind++] = tmp_cur;
+        indiv_arg[tmp_arg_ind++] = (char *)strdup(tmp_cur);
 
       }
       indiv_arg[tmp_arg_ind] = NULL;
@@ -222,33 +227,30 @@ Arguments* make_argument(Arguments* args) {
   return args;
 }
 
-void dish_exec(Arguments* args) { //TODO: ITS YOU
+void dish_exec(Arguments* args) { 
 	char* exec_arg = args->args_list[0];
   size_t exec_amount = args->exec_list_size;
-	if (exec_arg == NULL) {
-		printf("Why so quiet? (No command entered)\n");
-    return;
-	}
 
   int checkcmd = 0;
 
-  // looks for cmd with int return type
-	for (int i = 0; i < dish_bltin_num_int(); i++) { 
-		if (strcmp(exec_arg, dish_builtin_func_int[i]) == 0) {
-			builtin_func_int[i](args->args_list);
-      checkcmd = 1;
-		}
-	}
-  // if not in (int) arr looks for cmds with string return type
-  for (int j = 0; j < dish_bltin_num_char(); j++) {
-    if (strcmp(exec_arg, dish_builtin_func_char[j]) == 0) {
-      builtin_func_char[j](args->args_list);
-      checkcmd = 1;
+  for (int k = 0; k < exec_amount; k++) {
+    // looks for cmd with int return type
+	  for (int i = 0; i < dish_bltin_num_int(); i++) { 
+	  	if (strcmp(args->exec_list[k], dish_builtin_func_int[i]) == 0) {
+	  		builtin_func_int[i](args->indiv_arg_list[k]);
+        checkcmd = 1;
+	  	}
+	  }
+    // if not in (int) arr looks for cmds with string return type
+    for (int j = 0; j < dish_bltin_num_char(); j++) {
+      if (strcmp(args->exec_list[k], dish_builtin_func_char[j]) == 0) {
+        builtin_func_char[j](args->indiv_arg_list[k]);
+        checkcmd = 1;
+      }
     }
-  }
-
-  if (checkcmd == 0) {
-    printf("Command '%s' not found.\n", exec_arg);
-    return;
+    if (checkcmd == 0) {
+      printf("Command '%s' not found.\n", exec_arg);
+      return;
+    }
   }
 }
